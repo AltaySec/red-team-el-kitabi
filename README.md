@@ -59,16 +59,3 @@ Bu proje MIT lisansı altında lisanslanmıştır. Detaylar için [LICENSE](LICE
 
 ---
 
-## 🤝 Katkıda Bulunma
-
-1. Repoyu fork'layın
-2. Feature branch oluşturun (`git checkout -b feature/yeni-ozellik`)
-3. Değişikliklerinizi commit edin (`git commit -m 'Yeni özellik eklendi'`)
-4. Branch'i push edin (`git push origin feature/yeni-ozellik`)
-5. Pull Request açın
-
----
-
-<p align="center">
-  <strong>Fevzi Ege Yurtsevenler</strong> · AltaySec
-</p>

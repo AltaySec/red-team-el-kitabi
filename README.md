@@ -22,33 +22,7 @@ Yetkili penetrasyon testleri ve red team operasyonları için hazırlanmış, te
 
 ---
 
-## 🚀 Kullanım
 
-### GitHub Pages ile (Önerilen)
-
-1. Repoyu fork'layın veya klonlayın
-2. **Settings → Pages** bölümüne gidin
-3. Source olarak `main` branch, `/root` veya ilgili klasörü seçin
-4. `red-team-handbook.html` dosyasına erişin:  
-   `https://kullaniciadi.github.io/repo-adi/red-team-handbook.html`
-
-### Lokal kullanım
-
-```bash
-# Dosyayı doğrudan tarayıcıda açın
-open red-team-handbook.html
-
-# veya basit bir HTTP sunucusu ile
-python3 -m http.server 8000
-# http://localhost:8000/red-team-handbook.html
-```
-
-### GitHub'da Önizleme
-
-- Raw dosyayı açın ve URL'deki `github.com` kısmını `htmlpreview.github.io` ile değiştirin  
-  Örnek: `https://htmlpreview.github.io/?https://github.com/USER/REPO/blob/main/red-team-handbook.html`
-
----
 
 ## 📚 Kategoriler
 
